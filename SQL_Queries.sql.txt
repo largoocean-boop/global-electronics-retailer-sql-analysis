@@ -1,0 +1,173 @@
+-- Global Electronics Retailer SQL Analysis
+-- Tool: DB Browser for SQLite
+
+-- Query 1: Total Products
+SELECT COUNT(*) AS Total_Products
+FROM Products;
+
+-- Query 2: Total Customers
+SELECT COUNT(*) AS Total_Customers
+FROM Customers;
+
+-- Query 3: Total Stores
+SELECT COUNT(*) AS Total_Stores
+FROM Stores;
+
+-- Query 4: Check Unit Price Data Type
+SELECT 
+    [Unit Price USD],
+    typeof([Unit Price USD]) AS Data_Type
+FROM Products
+LIMIT 10;
+
+-- Query 5: Total Revenue
+SELECT
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Total_Revenue
+FROM Sales s
+JOIN Products p
+    ON s.ProductKey = p.ProductKey;
+
+-- Query 6: Revenue by Product Category
+SELECT
+    p.Category,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue
+FROM Sales s
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY p.Category
+ORDER BY Revenue DESC;
+
+-- Query 7: Revenue by Country / Channel
+SELECT
+    st.Country,
+    COUNT(DISTINCT st.StoreKey) AS Number_of_Stores,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue
+FROM Sales s
+JOIN Stores st
+    ON s.StoreKey = st.StoreKey
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY st.Country
+ORDER BY Revenue DESC;
+
+-- Query 8: Top 10 Products by Revenue
+SELECT
+    p.[Product Name],
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue
+FROM Sales s
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY p.[Product Name]
+ORDER BY Revenue DESC
+LIMIT 10;
+
+-- Query 9: Top 10 Customers by Revenue
+SELECT
+    c.Name AS Customer_Name,
+    c.Country,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue
+FROM Sales s
+JOIN Customers c
+    ON s.CustomerKey = c.CustomerKey
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY c.CustomerKey, c.Name, c.Country
+ORDER BY Revenue DESC
+LIMIT 10;
+
+-- Query 10: Inspect Order Date Format
+SELECT [Order Date]
+FROM Sales
+LIMIT 10;
+
+-- Query 11: Extract Year from Order Date
+SELECT
+    [Order Date],
+    substr([Order Date], -4) AS Year
+FROM Sales
+LIMIT 10;
+
+-- Query 12: Revenue by Year
+SELECT
+    substr([Order Date], -4) AS Year,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue
+FROM Sales s
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY substr([Order Date], -4)
+ORDER BY Year;
+
+-- Query 13: Revenue Per Store by Country / Channel
+SELECT
+    st.Country,
+    COUNT(DISTINCT st.StoreKey) AS Stores,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ) / COUNT(DISTINCT st.StoreKey),
+    2) AS Revenue_Per_Store
+FROM Sales s
+JOIN Stores st
+    ON s.StoreKey = st.StoreKey
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY st.Country
+ORDER BY Revenue_Per_Store DESC;
+
+-- Query 14: Top 10 Stores / Channels by Revenue
+SELECT
+    st.StoreKey,
+    st.Country,
+    st.State,
+    ROUND(
+        SUM(
+            s.Quantity *
+            CAST(REPLACE(REPLACE(p.[Unit Price USD], '$', ''), ',', '') AS REAL)
+        ),
+    2) AS Revenue
+FROM Sales s
+JOIN Stores st
+    ON s.StoreKey = st.StoreKey
+JOIN Products p
+    ON s.ProductKey = p.ProductKey
+GROUP BY st.StoreKey, st.Country, st.State
+ORDER BY Revenue DESC
+LIMIT 10;
+
